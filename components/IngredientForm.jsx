@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  PhotoIcon,
-  UserCircleIcon,
-  TrashIcon,
-} from "@heroicons/react/20/solid";
-import { Disclosure } from "@headlessui/react";
+import { TrashIcon } from "@heroicons/react/20/solid";
 import ComboBox from "./ComboBox";
 
 const options = [
@@ -16,33 +11,23 @@ const options = [
   { id: 6, name: "Hellen Schmidt" },
 ];
 
-function IngredientForm({
-  ingredientData = {
-    title: "title",
-    description: "description",
-    date: "2023-01-23T13:23Z",
-  },
-}) {
+function IngredientForm({id = null}) {
+
   return (
     <div className="sm:col-span-4">
-      <label className="block text-sm font-medium leading-6 text-gray-900">
+      <h3 className="block text-sm font-medium leading-6 text-gray-900">
         Ingredient
-      </label>
-      <Disclosure>
-        <div className="flex flex-col">
-          <div className="flex flex-row gap-3">
-            <img
-              class="h-12 w-12 flex-none rounded-full bg-gray-50"
-              src="https://upload.wikimedia.org/wikipedia/commons/8/87/Red-Pepper.jpg"
-              alt=""
-            />
-            <ComboBox options={options} className="h-12 w-12" />
-          
-            <TrashIcon className="w-7" />
-          </div>
-          <Disclosure.Panel>HI</Disclosure.Panel>
-        </div>
-      </Disclosure>
+      </h3>
+      <div className="flex flex-row gap-3">
+        <img
+          class="h-12 w-12 flex-none rounded-full bg-gray-50"
+          src="https://upload.wikimedia.org/wikipedia/commons/8/87/Red-Pepper.jpg"
+          alt=""
+        />
+        <ComboBox id={id} options={options} className="h-12 w-12" />
+
+        <TrashIcon className="w-7" />
+      </div>
     </div>
   );
 }
