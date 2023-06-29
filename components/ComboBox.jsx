@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { Combobox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
-export default function ComboBox({ id = null, options = [] }) {
+export default function ComboBox({ id = null, options = [], name }) {
 
   const [selected, setSelected] = useState(id ? id : options[0]);
   const [query, setQuery] = useState("");
@@ -18,7 +18,7 @@ export default function ComboBox({ id = null, options = [] }) {
         );
 
   return (
-    <Combobox value={selected} onChange={setSelected} name="ingredient">
+    <Combobox value={selected} onChange={setSelected} name={name}>
       <div className="relative mt-1">
         <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
           <Combobox.Input

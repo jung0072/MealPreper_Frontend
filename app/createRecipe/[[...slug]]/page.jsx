@@ -20,6 +20,46 @@ function CreateRecipePage({ params }) {
     console.log({ value });
   }
 
+  const [ingredientSlots, setIngredientSlots] = React.useState([1, 2]);
+
+  function addIngredientSlot() {
+    console.log("addIngredientSlot");
+    setIngredientSlots((slots) => {
+      return [...slots, slots[slots.length - 1] + 1];
+    });
+  }
+
+  function removeIngredientSlot(id) {
+    console.log("removeIngredientSlot");
+    setIngredientSlots((slots) => slots.filter((slot) => slot !== id));
+  }
+
+  async function GenerateRecipeWithLink(params) {
+    const form = document.querySelector("form");
+    const data = new FormData(form);
+    const value = Object.fromEntries(data.entries());
+    const copiedRecipe = value.copiedRecipe;
+    var token = "";
+    if (typeof window !== "undefined") {
+      token = localStorage.getItem("token") || "";
+    }
+    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
+    const url = `${serverURL}api/generateRecipe`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ copiedRecipe }),
+    });
+
+    const jsonRes = await res.json();
+
+    console.log(jsonRes.data);
+  }
+
   return (
     <>
       <header className="bg-white shadow">
@@ -29,7 +69,7 @@ function CreateRecipePage({ params }) {
           </h1>
         </div>
       </header>
-      <form onSubmit={handleFormSubmit}>
+      <form id="form" onSubmit={handleFormSubmit}>
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-12">
           <div className="border-b border-gray-900/10 pb-12">
             <h2 className="text-base font-semibold leading-7 text-gray-900">
@@ -37,10 +77,61 @@ function CreateRecipePage({ params }) {
             </h2>
 
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              <TitleForm />
-              <IngredientForm id={id} />
-              <IngredientForm id={id} />
+              {/* Link */}
+              <div className="sm:col-span-6">
+                <label
+                  htmlFor="link"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Link
+                </label>
 
+                <input
+                  type="text"
+                  name="link"
+                  id="link"
+                  className="block w-full mt-2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+                <label
+                  htmlFor="copiedRecipe"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Copied Recipe
+                </label>
+                <input
+                  type="textfield"
+                  name="copiedRecipe"
+                  id="copiedRecipe"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+                <button onClick={GenerateRecipeWithLink}>
+                  Generate Recipe
+                </button>
+                <p id="generated result"></p>
+              </div>
+
+              {/* Title */}
+              <TitleForm />
+
+              {/* Ingredient */}
+              <div className="sm:col-span-4">
+                <h3 className="block text-sm font-medium leading-6 text-gray-900">
+                  Ingredient
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {ingredientSlots.map((id) => (
+                    <IngredientForm
+                      key={id}
+                      id={id}
+                      name={`ingredient${id}`}
+                      remove={removeIngredientSlot}
+                    />
+                  ))}
+                </div>
+                <button onClick={addIngredientSlot}>Add</button>
+              </div>
+
+              {/* Type */}
               <div className="sm:col-span-3">
                 <label
                   htmlFor="type"
@@ -55,27 +146,15 @@ function CreateRecipePage({ params }) {
                     autoComplete="type-name"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>United States</option>
-                    <option>Canada</option>
-                    <option>Mexico</option>
+                    <option>Lunch</option>
+                    <option>Dinner</option>
                   </select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* <div className="border-b border-gray-900/10 pb-12">
-            <h2 className="text-base font-semibold leading-7 text-gray-900">
-              Notifications
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-gray-600">
-              We'll always let you know about important changes, but you pick
-              what else you want to hear aboutimport IngredientForm from '../../components/ingredientForm';
-.import ComboBox from '../../components/ComboBox';
-import AmountForm from '../../components/AmountForm';
-
-            </p>
-
+          <div className="border-b border-gray-900/10 pb-12">
             <div className="mt-10 space-y-10">
               <fieldset>
                 <legend className="text-sm font-semibold leading-6 text-gray-900">
@@ -94,7 +173,8 @@ import AmountForm from '../../components/AmountForm';
                     <div className="text-sm leading-6">
                       <label
                         htmlFor="comments"
-                        className="font-medium text-gray-900">
+                        className="font-medium text-gray-900"
+                      >
                         Comments
                       </label>
                       <p className="text-gray-500">
@@ -114,7 +194,8 @@ import AmountForm from '../../components/AmountForm';
                     <div className="text-sm leading-6">
                       <label
                         htmlFor="candidates"
-                        className="font-medium text-gray-900">
+                        className="font-medium text-gray-900"
+                      >
                         Candidates
                       </label>
                       <p className="text-gray-500">
@@ -134,7 +215,8 @@ import AmountForm from '../../components/AmountForm';
                     <div className="text-sm leading-6">
                       <label
                         htmlFor="offers"
-                        className="font-medium text-gray-900">
+                        className="font-medium text-gray-900"
+                      >
                         Offers
                       </label>
                       <p className="text-gray-500">
@@ -145,57 +227,8 @@ import AmountForm from '../../components/AmountForm';
                   </div>
                 </div>
               </fieldset>
-              <fieldset>
-                <legend className="text-sm font-semibold leading-6 text-gray-900">
-                  Push Notifications
-                </legend>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  These are delivered via SMS to your mobile phone.
-                </p>
-                <div className="mt-6 space-y-6">
-                  <div className="flex items-center gap-x-3">
-                    <input
-                      id="push-everything"
-                      name="push-notifications"
-                      type="radio"
-                      className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                    />
-                    <label
-                      htmlFor="push-everything"
-                      className="block text-sm font-medium leading-6 text-gray-900">
-                      Everything
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-x-3">
-                    <input
-                      id="push-email"
-                      name="push-notifications"
-                      type="radio"
-                      className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                    />
-                    <label
-                      htmlFor="push-email"
-                      className="block text-sm font-medium leading-6 text-gray-900">
-                      Same as email
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-x-3">
-                    <input
-                      id="push-nothing"
-                      name="push-notifications"
-                      type="radio"
-                      className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                    />
-                    <label
-                      htmlFor="push-nothing"
-                      className="block text-sm font-medium leading-6 text-gray-900">
-                      No push notifications
-                    </label>
-                  </div>
-                </div>
-              </fieldset>
             </div>
-          </div> */}
+          </div>
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-x-6">
