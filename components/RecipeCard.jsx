@@ -11,22 +11,22 @@ function RecipeCard({ recipeData }) {
         <div className="flex flex-col">
           <div className="flex flex-row gap-3">
             <img
-              class="h-12 w-12 flex-none rounded-full bg-gray-50"
+              className="h-12 w-12 flex-none rounded-full bg-gray-50"
               src={image}
               alt=""
             />
-            <div class="min-w-0 flex-auto">
-              <p class="text-sm font-semibold leading-6 text-gray-900">
+            <div className="min-w-0 flex-auto">
+              <p className="text-sm font-semibold leading-6 text-gray-900">
                 {title}
               </p>
-              <p class="mt-1 truncate text-xs leading-5 text-gray-500">
+              <p className="mt-1 truncate text-xs leading-5 text-gray-500">
                 {description}
               </p>
             </div>
-            <div class="hidden sm:flex sm:flex-col sm:items-end">
-              <p class="text-sm leading-6 text-gray-900">Co-Founder / CEO</p>
-              <p class="mt-1 text-xs leading-5 text-gray-500">
-                Last seen <time datetime={date}></time>
+            <div className="hidden sm:flex sm:flex-col sm:items-end">
+              <p className="text-sm leading-6 text-gray-900">Co-Founder / CEO</p>
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Last seen <time dateTime={date}></time>
               </p>
             </div>
             <Disclosure.Button>

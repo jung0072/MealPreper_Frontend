@@ -1,37 +1,61 @@
 "use client";
-import React from "react";
+import React, { useCallback } from "react";
 import IngredientForm from "../../../components/IngredientForm";
+import InstructionForm from "../../../components/InstructionForm";
 
 function CreateRecipePage({ params }) {
-  const id = params?.slug?.[0]; // Handle empty slugs
-  const options = [
-    { id: 1, name: "Red Pepper" },
-    { id: 2, name: "Arlene Mccoy" },
-    { id: 3, name: "Devon Webb" },
-    { id: 4, name: "Tom Cook" },
-    { id: 5, name: "Tanya Fox" },
-    { id: 6, name: "Hellen Schmidt" },
-  ];
+  const id = params?.slug?.[0];
+  const [recipeData, setRecipeData] = React.useState(null);
 
   function handleFormSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
     const value = Object.fromEntries(data.entries());
-    console.log({ value });
+    console.log("submited form", { value });
   }
 
-  const [ingredientSlots, setIngredientSlots] = React.useState([1, 2]);
+  React.useEffect(() => {
+    if (recipeData != null) {
+      setInstructionSlots(recipeData?.instructions);
+      setIngredientSlots(recipeData?.ingredients);
+    }
+  }, [recipeData]);
 
-  function addIngredientSlot() {
+  const [ingredientSlots, setIngredientSlots] = React.useState(() => [
+    { ingredient: "", amount: "", unit: "" },
+  ]);
+
+  const addSlotHandler = useCallback((slotType) => {
+    if (slotType === "ingredient") {
+      addIngredientSlot();
+    } else if (slotType === "instruction") {
+      addInstructionSlot();
+    }
+  }, []);
+
+  const addIngredientSlot = useCallback(() => {
     console.log("addIngredientSlot");
-    setIngredientSlots((slots) => {
-      return [...slots, slots[slots.length - 1] + 1];
-    });
-  }
+    setIngredientSlots((prev) => [
+      ...prev,
+      { ingredient: "", amount: "", unit: "" },
+    ]);
+  }, [ingredientSlots]);
 
   function removeIngredientSlot(id) {
     console.log("removeIngredientSlot");
-    setIngredientSlots((slots) => slots.filter((slot) => slot !== id));
+    // setIngredientSlots((slots) => slots.filter((slot) => slot !== id));
+  }
+
+  const [instructionSlots, setInstructionSlots] = React.useState(() => [""]);
+
+  function addInstructionSlot() {
+    setInstructionSlots((prev) => [...prev, ""]);
+    console.log("addInstructionSlot");
+  }
+
+  function removeInstructionSlot(id) {
+    setInstructionSlots((slots) => slots.filter((slot) => slot !== id));
+    console.log("removeInstructionSlot");
   }
 
   async function GenerateRecipeWithLink(params) {
@@ -39,6 +63,7 @@ function CreateRecipePage({ params }) {
     const data = new FormData(form);
     const value = Object.fromEntries(data.entries());
     const copiedRecipe = value.copiedRecipe;
+    console.log("copiedRecipe", copiedRecipe);
     var token = "";
     if (typeof window !== "undefined") {
       token = localStorage.getItem("token") || "";
@@ -55,9 +80,13 @@ function CreateRecipePage({ params }) {
       body: JSON.stringify({ copiedRecipe }),
     });
 
+    // Convert response's body json to JS object
     const jsonRes = await res.json();
 
-    console.log(jsonRes.data);
+    // Convert content format from text to json
+    const result = JSON.parse(jsonRes.data.content);
+
+    setRecipeData(result);
   }
 
   return (
@@ -104,14 +133,14 @@ function CreateRecipePage({ params }) {
                   id="copiedRecipe"
                   className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                <button onClick={GenerateRecipeWithLink}>
+                <button type="button" onClick={GenerateRecipeWithLink}>
                   Generate Recipe
                 </button>
                 <p id="generated result"></p>
               </div>
 
               {/* Title */}
-              <TitleForm />
+              <TitleForm title={recipeData?.title} />
 
               {/* Ingredient */}
               <div className="sm:col-span-4">
@@ -119,18 +148,46 @@ function CreateRecipePage({ params }) {
                   Ingredient
                 </h3>
                 <div className="flex flex-col gap-2">
-                  {ingredientSlots.map((id) => (
+                  {ingredientSlots?.map((slot, index) => (
                     <IngredientForm
-                      key={id}
-                      id={id}
-                      name={`ingredient${id}`}
+                      key={index}
+                      id={index}
+                      name={`ingredient${index}`}
                       remove={removeIngredientSlot}
+                      ingredientData={slot}
                     />
                   ))}
                 </div>
-                <button onClick={addIngredientSlot}>Add</button>
+                <button
+                  type="button"
+                  onClick={() => addSlotHandler("ingredient")}
+                >
+                  Add
+                </button>
               </div>
 
+              {/* Instructions */}
+              <div className="sm:col-span-4">
+                <h3 className="block text-sm font-medium leading-6 text-gray-900">
+                  Instructions
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {instructionSlots?.map((slot, index) => (
+                    <InstructionForm
+                      key={index}
+                      id={index}
+                      remove={removeInstructionSlot}
+                      instructionData={slot}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addSlotHandler("instruction")}
+                >
+                  Add
+                </button>
+              </div>
               {/* Type */}
               <div className="sm:col-span-3">
                 <label
@@ -154,7 +211,7 @@ function CreateRecipePage({ params }) {
             </div>
           </div>
 
-          <div className="border-b border-gray-900/10 pb-12">
+          {/* <div className="border-b border-gray-900/10 pb-12">
             <div className="mt-10 space-y-10">
               <fieldset>
                 <legend className="text-sm font-semibold leading-6 text-gray-900">
@@ -228,7 +285,7 @@ function CreateRecipePage({ params }) {
                 </div>
               </fieldset>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -252,7 +309,7 @@ function CreateRecipePage({ params }) {
 
 export default CreateRecipePage;
 
-function TitleForm() {
+function TitleForm({ title }) {
   return (
     <div className="sm:col-span-3">
       <label
@@ -266,6 +323,7 @@ function TitleForm() {
           type="text"
           name="title"
           id="title"
+          value={title}
           autoComplete="given-name"
           className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
         />

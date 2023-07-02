@@ -2,9 +2,9 @@ import { Fragment, useState } from "react";
 import { Combobox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
-export default function ComboBox({ id = null, options = [], name }) {
+export default function ComboBox({ id = null, options = [], name, value=null }) {
 
-  const [selected, setSelected] = useState(id ? id : options[0]);
+  const [selected, setSelected] = useState(value);
   const [query, setQuery] = useState("");
 
   const filteredOptions =

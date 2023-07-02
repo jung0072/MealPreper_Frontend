@@ -26,7 +26,7 @@ const unitOptions = [
   { id: 12, name: "gallons" },
 ];
 
-function IngredientForm({ id = null, name, remove }) {
+function IngredientForm({ id = null, name, remove, ingredientData }) {
   return (
     <div className="flex flex-row gap-3">
       <img
@@ -34,23 +34,26 @@ function IngredientForm({ id = null, name, remove }) {
         src="https://upload.wikimedia.org/wikipedia/commons/8/87/Red-Pepper.jpg"
         alt=""
       />
-      <ComboBox
+      <input
+        type="text"
         name={`${name}-name`}
         id={id}
-        options={recipeOptions}
-        className="h-12 w-12"
+        value={ingredientData?.ingredient}
+        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
       <input
         type="number"
         name={`${name}-amount`}
         id={id}
+        value={ingredientData?.amount}
         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
-      <ComboBox
+      <input
+        type="text"
         name={`${name}-unit`}
         id={id}
-        options={unitOptions}
-        className="h-12 w-12"
+        value={ingredientData?.unit}
+        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
       <TrashIcon className="w-7" onClick={() => remove(id)} />
     </div>

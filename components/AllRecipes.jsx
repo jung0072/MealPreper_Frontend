@@ -38,10 +38,10 @@ const AllRecipes = () => {
   }, []);
 
   return (
-    <ul role="list" class="divide-y divide-gray-100">
+    <ul role="list" className="divide-y divide-gray-100">
       {data.map((recipe) => {
         return (
-          <li class="py-5">
+          <li className="py-5">
             <RecipeCard recipeData={recipe} />
           </li>
         );
