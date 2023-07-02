@@ -7,11 +7,45 @@ function CreateRecipePage({ params }) {
   const id = params?.slug?.[0];
   const [recipeData, setRecipeData] = React.useState(null);
 
-  function handleFormSubmit(event) {
+  async function handleFormSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
     const value = Object.fromEntries(data.entries());
-    console.log("submited form", { value });
+    const submitData = {
+      title: value.title,
+      ingredients: [],
+      instructions: [],
+    };
+
+    for (let i = 0; value[`instruction-${i}`] != null; i++) {
+      const instruction = value[`instruction-${i}`];
+      submitData.instructions.push(instruction);
+    }
+
+    for (let i = 0; value[`ingredient-${i}-name`] != null; i++) {
+      const ingredient = {
+        ingredient: value[`ingredient-${i}-name`],
+        amount: value[`ingredient-${i}-amount`],
+        unit: value[`ingredient-${i}-unit`],
+      };
+      submitData.ingredients.push(ingredient);
+    }
+
+    console.log("submit formData", { submitData });
+
+    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
+    const token = localStorage.getItem("token") || "";
+
+    const res = await fetch(`${serverURL}api/createRecipe`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(submitData),
+    });
+    const json = await res.json();
+    console.log("submit result", { json });
   }
 
   React.useEffect(() => {
@@ -63,7 +97,7 @@ function CreateRecipePage({ params }) {
     const data = new FormData(form);
     const value = Object.fromEntries(data.entries());
     const copiedRecipe = value.copiedRecipe;
-    console.log("copiedRecipe", copiedRecipe);
+
     var token = "";
     if (typeof window !== "undefined") {
       token = localStorage.getItem("token") || "";
@@ -152,7 +186,6 @@ function CreateRecipePage({ params }) {
                     <IngredientForm
                       key={index}
                       id={index}
-                      name={`ingredient${index}`}
                       remove={removeIngredientSlot}
                       ingredientData={slot}
                     />
@@ -323,7 +356,7 @@ function TitleForm({ title }) {
           type="text"
           name="title"
           id="title"
-          value={title}
+          defaultValue={title}
           autoComplete="given-name"
           className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
         />

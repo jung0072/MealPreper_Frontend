@@ -36,23 +36,23 @@ function IngredientForm({ id = null, name, remove, ingredientData }) {
       />
       <input
         type="text"
-        name={`${name}-name`}
+        name={`ingredient-${id}-name`}
         id={id}
-        value={ingredientData?.ingredient}
+        defaultValue={ingredientData?.ingredient}
         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
       <input
         type="number"
-        name={`${name}-amount`}
+        name={`ingredient-${id}-amount`}
         id={id}
-        value={ingredientData?.amount}
+        defaultValue={ingredientData?.amount}
         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
       <input
         type="text"
-        name={`${name}-unit`}
+        name={`ingredient-${id}-unit`}
         id={id}
-        value={ingredientData?.unit}
+        defaultValue={ingredientData?.unit}
         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       />
       <TrashIcon className="w-7" onClick={() => remove(id)} />
