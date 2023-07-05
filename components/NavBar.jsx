@@ -14,7 +14,7 @@ const user = {
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
 };
 const navigation = [
-  { name: "All Recipes", href: "/", current: true },
+  { name: "All Recipes", href: "/allRecipes", current: false },
   { name: "This Week", href: "/thisWeek", current: false },
   { name: "History", href: "/history", current: false },
 ];
@@ -24,8 +24,8 @@ const userNavigation = [
   { name: "Your Profile", href: "/api/auth" },
   { name: "Settings", href: "/api/auth/setting" },
   {
-    name: "Sign out",
-    href: `${serverURL}auth/logout?redirect_url=${redirectURL}`,
+    name: "Log out",
+    href: `/auth/logout`,
   },
   {
     name: "Log In",
@@ -48,11 +48,13 @@ export default function NavBar({ children }) {
             <div className="flex h-16 items-center justify-between">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <img
-                    className="h-8 w-8"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
-                    alt="Your Company"
-                  />
+                  <Link href='/'>
+                    <img
+                      className="h-8 w-8"
+                      src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
+                      alt="Your Company"
+                    />
+                  </Link>
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-10 flex items-baseline space-x-4">
@@ -75,7 +77,7 @@ export default function NavBar({ children }) {
               </div>
               <div className="hidden md:block">
                 <div className="ml-4 flex items-center md:ml-6">
-                  <Link href="./createRecipe">
+                  <Link href="./recipe">
                     <button
                       type="button"
                       className="rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
@@ -110,7 +112,7 @@ export default function NavBar({ children }) {
                         {userNavigation.map((item, index) => (
                           <Menu.Item key={item.name}>
                             {({ active }) => (
-                              <a
+                              <Link
                                 key={index}
                                 href={item.href}
                                 className={classNames(
@@ -119,7 +121,7 @@ export default function NavBar({ children }) {
                                 )}
                               >
                                 {item.name}
-                              </a>
+                              </Link>
                             )}
                           </Menu.Item>
                         ))}

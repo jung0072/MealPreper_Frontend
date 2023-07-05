@@ -4,11 +4,11 @@ import { TrashIcon } from "@heroicons/react/20/solid";
 function InstructionForm({ id = null, remove, instructionData }) {
   return (
     <div className="flex flex-row gap-3">
-      <img
+      {/* <img
         className="h-12 w-12 flex-none rounded-full bg-gray-50"
         src="https://upload.wikimedia.org/wikipedia/commons/8/87/Red-Pepper.jpg"
         alt=""
-      />
+      /> */}
       <input
         type="text"
         name={`instruction-${id}`}

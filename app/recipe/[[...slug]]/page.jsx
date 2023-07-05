@@ -2,19 +2,40 @@
 import React, { useCallback } from "react";
 import IngredientForm from "../../../components/IngredientForm";
 import InstructionForm from "../../../components/InstructionForm";
+import Rating from "@mui/material/Rating";
+import { useContext } from "react";
+import { UserContext } from "../../../app/layout";
 
 function CreateRecipePage({ params }) {
   const id = params?.slug?.[0];
-  const [recipeData, setRecipeData] = React.useState(null);
+  const { userData, setUserData } = useContext(UserContext);
+  console.log("userData createRecipePage", { userData });
+
+  const recipeDataForCertainId =
+    userData != null && id != null
+      ? userData.find((recipe) => recipe._id === id)
+      : null;
+  const [recipeData, setRecipeData] = React.useState(recipeDataForCertainId);
+  const [servings, setServings] = React.useState(1);
+  const [rateValue, setRateValue] = React.useState(0);
+  const [description, setDescription] = React.useState("");
+  const [GPTAnswer, setGPTAnswer] = React.useState("");
 
   async function handleFormSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
     const value = Object.fromEntries(data.entries());
+    console.log("Form Entries:", value);
     const submitData = {
       title: value.title,
+      description: value.description,
       ingredients: [],
       instructions: [],
+      servings: value.servings,
+      rating: value.rating,
+      link: value.link,
+      copiedRecipe: copiedRecipe,
+      type: value.type,
     };
 
     for (let i = 0; value[`instruction-${i}`] != null; i++) {
@@ -31,27 +52,50 @@ function CreateRecipePage({ params }) {
       submitData.ingredients.push(ingredient);
     }
 
-    console.log("submit formData", { submitData });
+    console.log("submit formData:", { submitData });
 
     const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
     const token = localStorage.getItem("token") || "";
 
-    const res = await fetch(`${serverURL}api/createRecipe`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(submitData),
-    });
-    const json = await res.json();
-    console.log("submit result", { json });
+    if (id) {
+      const res = await fetch(`${serverURL}api/recipe/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitData),
+      });
+      const json = await res.json();
+      console.log("Form Submitted with a result:", { json });
+      setUserData((prev) => {
+        const newUserData = [...prev];
+        const index = newUserData.findIndex((recipe) => recipe._id === id);
+        newUserData[index] = json.data;
+        return newUserData;
+      });
+    } else {
+      const res = await fetch(`${serverURL}api/recipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitData),
+      });
+      const json = await res.json();
+      console.log("Form Submitted with a result:", { json });
+    }
   }
 
   React.useEffect(() => {
     if (recipeData != null) {
+      console.log("recipeData", recipeData);
+
+      setDescription(recipeData?.description);
       setInstructionSlots(recipeData?.instructions);
       setIngredientSlots(recipeData?.ingredients);
+      setServings(recipeData?.servings);
     }
   }, [recipeData]);
 
@@ -92,12 +136,10 @@ function CreateRecipePage({ params }) {
     console.log("removeInstructionSlot");
   }
 
-  async function GenerateRecipeWithLink(params) {
-    const form = document.querySelector("form");
-    const data = new FormData(form);
-    const value = Object.fromEntries(data.entries());
-    const copiedRecipe = value.copiedRecipe;
+  const [copiedRecipe, setCopiedRecipe] = React.useState("");
 
+  async function GenerateRecipe() {
+    console.log("GenerateRecipe");
     var token = "";
     if (typeof window !== "undefined") {
       token = localStorage.getItem("token") || "";
@@ -114,11 +156,20 @@ function CreateRecipePage({ params }) {
       body: JSON.stringify({ copiedRecipe }),
     });
 
+    console.log("res", res);
     // Convert response's body json to JS object
     const jsonRes = await res.json();
+    console.log("jsonRes", jsonRes);
+    console.log("content", jsonRes.data.content);
 
+    var result = null;
+    try {
+      result = JSON.parse(jsonRes.data.content);
+    } catch (error) {
+      console.log("Content from GPT is not a valid JSON");
+      setGPTAnswer(jsonRes.data.content);
+    }
     // Convert content format from text to json
-    const result = JSON.parse(jsonRes.data.content);
 
     setRecipeData(result);
   }
@@ -142,13 +193,12 @@ function CreateRecipePage({ params }) {
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               {/* Link */}
               <div className="sm:col-span-6">
-                <label
+                {/* <label
                   htmlFor="link"
                   className="block text-sm font-medium leading-6 text-gray-900"
                 >
                   Link
                 </label>
-
                 <input
                   type="text"
                   name="link"
@@ -160,21 +210,52 @@ function CreateRecipePage({ params }) {
                   className="block text-sm font-medium leading-6 text-gray-900"
                 >
                   Copied Recipe
-                </label>
-                <input
-                  type="textfield"
-                  name="copiedRecipe"
+                </label> */}
+                <span
+                  role="textbox"
+                  contentEditable="true"
                   id="copiedRecipe"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  name="ddd"
+                  value={copiedRecipe}
+                  onInput={(e) => {
+                    setCopiedRecipe(e.target.innerText);
+                  }}
+                  className="resizingTextArea block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
-                <button type="button" onClick={GenerateRecipeWithLink}>
+                <p id="generated result">{GPTAnswer}</p>
+                <button
+                  type="button"
+                  onClick={GenerateRecipe}
+                  className="mt-2 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
                   Generate Recipe
                 </button>
-                <p id="generated result"></p>
               </div>
 
               {/* Title */}
               <TitleForm title={recipeData?.title} />
+
+              {/* Description */}
+              <div className="sm:col-span-6">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Description
+                </label>
+                <div className="mt-1">
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows={3}
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    defaultValue={recipeData?.description}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  Brief description of the recipe.
+                </p>
+              </div>
 
               {/* Ingredient */}
               <div className="sm:col-span-4">
@@ -188,6 +269,7 @@ function CreateRecipePage({ params }) {
                       id={index}
                       remove={removeIngredientSlot}
                       ingredientData={slot}
+                      setIngredientSlots={setIngredientSlots}
                     />
                   ))}
                 </div>
@@ -221,6 +303,43 @@ function CreateRecipePage({ params }) {
                   Add
                 </button>
               </div>
+              {/* Servings */}
+              <div className="sm:col-span-3">
+                <label
+                  htmlFor="servings"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Servings
+                </label>
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    name="servings"
+                    id="servings"
+                    value={servings}
+                    onChange={(event) => setServings(event.target.value)}
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              {/* Rating */}
+              <div className="sm:col-span-3">
+                <label
+                  htmlFor="rating"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Rating
+                </label>
+                <div className="mt-2">
+                  <Rating
+                    name="rating"
+                    value={rateValue}
+                    onChange={(event, newValue) => {
+                      setRateValue(newValue);
+                    }}
+                  />
+                </div>
+              </div>
               {/* Type */}
               <div className="sm:col-span-3">
                 <label
@@ -236,8 +355,13 @@ function CreateRecipePage({ params }) {
                     autoComplete="type-name"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Lunch</option>
-                    <option>Dinner</option>
+                    <option value="MEAL_PREP_LUNCH">Meal Prep Lunch</option>
+                    <option value="MEAL_PREP_DINNER">Meal Prep Dinner</option>
+                    <option value="MEAL">Meal</option>
+                    <option value="SNACK">Snack</option>
+                    <option value="DESSERT">Dessert</option>
+                    <option value="DRINK">Drink</option>
+                    <option value="OTHER">Other</option>
                   </select>
                 </div>
               </div>
