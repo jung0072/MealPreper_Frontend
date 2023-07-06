@@ -27,7 +27,9 @@ export default function RootLayout({ children }) {
   // Fetch user data when the token changes
   React.useEffect(() => {
     async function asyncFetchUserData() {
-      if (!token) return;
+      if (!token) {
+        console.log("Could not fetch user data because token is null");
+        return;};
       const data = await fetchUserData(token);
       setUserData(data);
     }

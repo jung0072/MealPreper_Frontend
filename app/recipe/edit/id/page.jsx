@@ -1,21 +1,25 @@
 "use client";
 import React, { useCallback } from "react";
-import IngredientForm from "../../../components/IngredientForm";
-import InstructionForm from "../../../components/InstructionForm";
+import IngredientForm from "../../../../components/IngredientForm";
+import InstructionForm from "../../../../components/InstructionForm";
 import Rating from "@mui/material/Rating";
 import { useContext } from "react";
-import { UserContext } from "../../../app/layout";
+import { UserContext } from "../../../../layout";
 
 function CreateRecipePage({ params }) {
-  const id = params?.slug?.[0];
+  const id = params.id
   const { userData, setUserData } = useContext(UserContext);
-  console.log("userData createRecipePage", { userData });
+  const [recipeData, setRecipeData] = React.useState(null);
 
-  const recipeDataForCertainId =
-    userData != null && id != null
-      ? userData.find((recipe) => recipe._id === id)
-      : null;
-  const [recipeData, setRecipeData] = React.useState(recipeDataForCertainId);
+  React.useEffect(() => {
+    console.log("userData updated:", userData);
+    const recipes = userData?.recipes || null;
+    if (recipes != null && id != null) {
+      const recipeWithCurrentId = recipes.find((recipe) => recipe._id === id);
+      setRecipeData(recipeWithCurrentId);
+    }
+  }, [userData]);
+
   const [servings, setServings] = React.useState(1);
   const [rateValue, setRateValue] = React.useState(0);
   const [description, setDescription] = React.useState("");
@@ -54,37 +58,55 @@ function CreateRecipePage({ params }) {
 
     console.log("submit formData:", { submitData });
 
-    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
-    const token = localStorage.getItem("token") || "";
+    const token = localStorage.getItem("token") || null;
+    if (!token) {
+      console.log("No token found");
+      return;
+    }
 
+    // If id exists, then we are editing an existing recipe
     if (id) {
-      const res = await fetch(`${serverURL}api/recipe/${id}`, {
+      const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
+      await fetch(`${serverURL}api/recipe/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(submitData),
-      });
-      const json = await res.json();
-      console.log("Form Submitted with a result:", { json });
-      setUserData((prev) => {
-        const newUserData = [...prev];
-        const index = newUserData.findIndex((recipe) => recipe._id === id);
-        newUserData[index] = json.data;
-        return newUserData;
-      });
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          console.log("Form Submitted with a result:", { json });
+          setUserData((prev) => {
+            const newUserData = prev;
+            const index = newUserData.recipes.findIndex(
+              (recipe) => recipe._id === id
+            );
+            newUserData.recipes[index] = json.data;
+            return newUserData;
+          });
+        })
+        .catch((err) => {
+          console.log("err", err);
+        });
     } else {
-      const res = await fetch(`${serverURL}api/recipe`, {
+      // If id does not exist, then we are creating a new recipe
+      await fetch(`${serverURL}api/recipe`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(submitData),
-      });
-      const json = await res.json();
-      console.log("Form Submitted with a result:", { json });
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          console.log("Form Submitted with a result:", { json });
+        })
+        .catch((err) => {
+          console.log("err", err);
+        });
     }
   }
 
@@ -249,7 +271,8 @@ function CreateRecipePage({ params }) {
                     name="description"
                     rows={3}
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    defaultValue={recipeData?.description}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
                 <p className="mt-2 text-sm text-gray-500">

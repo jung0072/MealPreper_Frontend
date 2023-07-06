@@ -19,13 +19,13 @@ function RecipeCard({ recipeData }) {
   return (
     <div className="flex flex-row w-full justify-between ">
       <Link
-        href={`/recipe/${_id}`}
+        href={`/recipe/view/${_id}`}
         className="flex flex-row gap-3 hover:bg-slate-400"
       >
         <img
           className="h-12 w-12 flex-none rounded-full bg-gray-50"
-          src={photo}
-          alt=""
+          src="/assets/images/sample-recipe-picture.jpeg"
+          alt="recipe image"
         />
         <div className="min-w-0 flex-auto">
           <p className="text-sm font-semibold leading-6 text-gray-900">

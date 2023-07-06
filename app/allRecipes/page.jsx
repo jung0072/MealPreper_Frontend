@@ -7,9 +7,9 @@ import { UserContext } from "../layout";
 
 const AllRecipesPage = () => {
   const { userData } = useContext(UserContext);
-  var recipes = null
+  var recipes = null;
   if (userData) {
-    recipes  = userData["recipes"];
+    recipes = userData["recipes"];
     console.log(recipes);
   }
 
