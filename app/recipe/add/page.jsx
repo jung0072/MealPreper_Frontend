@@ -14,6 +14,7 @@ function RecipeAddPage({ params }) {
   const [rateValue, setRateValue] = React.useState(0);
   const [description, setDescription] = React.useState("");
   const [GPTAnswer, setGPTAnswer] = React.useState("");
+  const [calories, setCalories] = React.useState(0);
 
   async function handleFormSubmit(event) {
     event.preventDefault();
@@ -26,6 +27,7 @@ function RecipeAddPage({ params }) {
       ingredients: [],
       instructions: [],
       servings: value.servings,
+      calories: value.calories,
       rating: value.rating,
       link: value.link,
       copiedRecipe: copiedRecipe,
@@ -33,16 +35,35 @@ function RecipeAddPage({ params }) {
     };
 
     for (let i = 0; value[`instruction-${i}`] != null; i++) {
-      const instruction = value[`instruction-${i}`];
+      const instruction = 
+        {
+          instructionContent: value[`instruction-${i}`],
+          block: i,
+        }
+      ;
       submitData.instructions.push(instruction);
     }
 
     for (let i = 0; value[`ingredient-${i}-name`] != null; i++) {
+      const blocks = [];
+      console.log("submitData instruction", submitData.instructions);
+      submitData.instructions.map((instruction) => {
+        console.log(instruction.instructionContent);
+        if (
+          instruction.instructionContent.includes(value[`ingredient-${i}-name`])
+        ) {
+          blocks.push(instruction.block);
+        }
+      });
+
       const ingredient = {
-        ingredient: value[`ingredient-${i}-name`],
+        ingredientName: value[`ingredient-${i}-name`],
         amount: value[`ingredient-${i}-amount`],
         unit: value[`ingredient-${i}-unit`],
+        process: value[`ingredient-${i}-process`],
+        blocks: blocks,
       };
+
       submitData.ingredients.push(ingredient);
     }
 
@@ -54,7 +75,7 @@ function RecipeAddPage({ params }) {
       return;
     }
 
-    await fetch(`${serverURL}api/recipe`, {
+    const resp = await fetch(`${serverURL}api/recipe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,7 +83,13 @@ function RecipeAddPage({ params }) {
       },
       body: JSON.stringify(submitData),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          console.log("response is not OK");
+          throw error;
+        }
+        res.json();
+      })
       .then((json) => {
         console.log("Form Submitted with a result:", { json });
       })
@@ -79,6 +106,7 @@ function RecipeAddPage({ params }) {
       setInstructionSlots(recipeData?.instructions);
       setIngredientSlots(recipeData?.ingredients);
       setServings(recipeData?.servings);
+      setCalories(recipeData?.calories);
     }
   }, [recipeData]);
 
@@ -307,6 +335,27 @@ function RecipeAddPage({ params }) {
                   />
                 </div>
               </div>
+
+              {/* Calories */}
+              <div className="sm:col-span-3">
+                <label
+                  htmlFor="calories"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Calories
+                </label>
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    name="calories"
+                    id="calories"
+                    value={calories}
+                    onChange={(event) => setCalories(event.target.value)}
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+
               {/* Rating */}
               <div className="sm:col-span-3">
                 <label
@@ -325,6 +374,7 @@ function RecipeAddPage({ params }) {
                   />
                 </div>
               </div>
+
               {/* Type */}
               <div className="sm:col-span-3">
                 <label
@@ -338,6 +388,7 @@ function RecipeAddPage({ params }) {
                     id="type"
                     name="type"
                     autoComplete="type-name"
+                    defaultValue="OTHER"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     <option value="MEAL_PREP_LUNCH">Meal Prep Lunch</option>
@@ -352,82 +403,6 @@ function RecipeAddPage({ params }) {
               </div>
             </div>
           </div>
-
-          {/* <div className="border-b border-gray-900/10 pb-12">
-            <div className="mt-10 space-y-10">
-              <fieldset>
-                <legend className="text-sm font-semibold leading-6 text-gray-900">
-                  By Email
-                </legend>
-                <div className="mt-6 space-y-6">
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="comments"
-                        name="comments"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="comments"
-                        className="font-medium text-gray-900"
-                      >
-                        Comments
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when someones posts a comment on a posting.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="candidates"
-                        name="candidates"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="candidates"
-                        className="font-medium text-gray-900"
-                      >
-                        Candidates
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when a candidate applies for a job.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="offers"
-                        name="offers"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="offers"
-                        className="font-medium text-gray-900"
-                      >
-                        Offers
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when a candidate accepts or rejects an
-                        offer.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </fieldset>
-            </div>
-          </div> */}
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-x-6">

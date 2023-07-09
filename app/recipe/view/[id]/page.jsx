@@ -5,14 +5,17 @@ import InstructionForm from "../../../../components/InstructionForm";
 import Rating from "@mui/material/Rating";
 import { useContext } from "react";
 import { UserContext } from "../../../../app/layout";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 function CreateRecipePage({ params }) {
+  const router = useRouter();
+
   const id = params.id;
   const { userData, setUserData } = useContext(UserContext);
   const [recipeData, setRecipeData] = React.useState(null);
 
   React.useEffect(() => {
-    console.log("userData updated:", userData);
     const recipes = userData?.recipes || null;
     if (recipes != null && id != null) {
       const recipeWithCurrentId = recipes.find((recipe) => recipe._id === id);
@@ -46,7 +49,6 @@ function CreateRecipePage({ params }) {
       const instruction = value[`instruction-${i}`];
       submitData.instructions.push(instruction);
     }
-
     for (let i = 0; value[`ingredient-${i}-name`] != null; i++) {
       const ingredient = {
         ingredient: value[`ingredient-${i}-name`],
@@ -55,42 +57,61 @@ function CreateRecipePage({ params }) {
       };
       submitData.ingredients.push(ingredient);
     }
-
-    console.log("submit formData:", { submitData });
+    const submitDataInJson = JSON.stringify(submitData);
+    console.log("submit formData:", { submitDataInJson });
 
     const token = localStorage.getItem("token") || null;
     if (!token) {
       console.log("No token found");
       return;
     }
-
     // If id exists, then we are editing an existing recipe
-    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
-    await fetch(`${serverURL}api/recipe/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(submitData),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log("Form Submitted with a result:", { json });
-        setUserData((prev) => {
-          const newUserData = prev;
-          const index = newUserData.recipes.findIndex(
-            (recipe) => recipe._id === id
-          );
-          newUserData.recipes[index] = json.data;
-          return newUserData;
-        });
+    if (id) {
+      const serverURL = process.env.NEXT_PUBLIC_SERVER_URL;
+      await fetch(`${serverURL}api/recipe/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitData),
       })
-      .catch((err) => {
-        console.log("err", err);
-      });
+        .then((res) => res.json())
+        .then((json) => {
+          console.log("Form Submitted with a result:", { json });
+          setUserData((prev) => {
+            const newUserData = prev;
+            const index = newUserData.recipes.findIndex(
+              (recipe) => recipe._id === id
+            );
+            newUserData.recipes[index] = json.data;
+            return newUserData;
+          });
+        })
+        .catch((err) => {
+          console.log("err", err);
+        });
+    } else {
+      // If id does not exist, then we are creating a new recipe
+      await fetch(`${serverURL}api/recipe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submitData),
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          console.log("Form Submitted with a result:", { json });
+        })
+        .catch((err) => {
+          console.log("err", err);
+        });
+    }
   }
 
+  // Change states according to the fetched recipe data
   React.useEffect(() => {
     if (recipeData != null) {
       console.log("recipeData", recipeData);
@@ -99,6 +120,7 @@ function CreateRecipePage({ params }) {
       setInstructionSlots(recipeData?.instructions);
       setIngredientSlots(recipeData?.ingredients);
       setServings(recipeData?.servings);
+      setRateValue(recipeData?.rating);
     }
   }, [recipeData]);
 
@@ -138,6 +160,7 @@ function CreateRecipePage({ params }) {
     setInstructionSlots((slots) => slots.filter((slot) => slot !== id));
     console.log("removeInstructionSlot");
   }
+
 
   const [copiedRecipe, setCopiedRecipe] = React.useState("");
 
@@ -189,10 +212,6 @@ function CreateRecipePage({ params }) {
       <form id="form" onSubmit={handleFormSubmit}>
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-12">
           <div className="border-b border-gray-900/10 pb-12">
-            <h2 className="text-base font-semibold leading-7 text-gray-900">
-              Please add your recipe below
-            </h2>
-
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               {/* Link */}
               <div className="sm:col-span-6">
@@ -234,6 +253,10 @@ function CreateRecipePage({ params }) {
                   Generate Recipe
                 </button>
               </div>
+
+              <Link href={`/recipe/cookingMode/${id}`} className="sm:col-span-6 mt-2 flex w-full justify-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                Cooking Mode
+              </Link>
 
               {/* Title */}
               <TitleForm title={recipeData?.title} />
@@ -297,6 +320,7 @@ function CreateRecipePage({ params }) {
                       id={index}
                       remove={removeInstructionSlot}
                       instructionData={slot}
+                      setInstructionSlots={setInstructionSlots}
                     />
                   ))}
                 </div>
@@ -307,6 +331,7 @@ function CreateRecipePage({ params }) {
                   Add
                 </button>
               </div>
+
               {/* Servings */}
               <div className="sm:col-span-3">
                 <label
@@ -326,6 +351,7 @@ function CreateRecipePage({ params }) {
                   />
                 </div>
               </div>
+
               {/* Rating */}
               <div className="sm:col-span-3">
                 <label
@@ -344,6 +370,7 @@ function CreateRecipePage({ params }) {
                   />
                 </div>
               </div>
+
               {/* Type */}
               <div className="sm:col-span-3">
                 <label
@@ -371,88 +398,13 @@ function CreateRecipePage({ params }) {
               </div>
             </div>
           </div>
-
-          {/* <div className="border-b border-gray-900/10 pb-12">
-            <div className="mt-10 space-y-10">
-              <fieldset>
-                <legend className="text-sm font-semibold leading-6 text-gray-900">
-                  By Email
-                </legend>
-                <div className="mt-6 space-y-6">
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="comments"
-                        name="comments"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="comments"
-                        className="font-medium text-gray-900"
-                      >
-                        Comments
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when someones posts a comment on a posting.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="candidates"
-                        name="candidates"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="candidates"
-                        className="font-medium text-gray-900"
-                      >
-                        Candidates
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when a candidate applies for a job.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="offers"
-                        name="offers"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="offers"
-                        className="font-medium text-gray-900"
-                      >
-                        Offers
-                      </label>
-                      <p className="text-gray-500">
-                        Get notified when a candidate accepts or rejects an
-                        offer.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </fieldset>
-            </div>
-          </div> */}
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-x-6">
           <button
             type="button"
             className="text-sm font-semibold leading-6 text-gray-900"
+            onClick={() => router.back()}
           >
             Cancel
           </button>
