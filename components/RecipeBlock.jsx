@@ -6,31 +6,29 @@ export default function RecipeBlocks({ recipeData }) {
   const serializedRecipes = React.useRef([]);
 
   React.useEffect(() => {
-    console.log("before serialized recipes", serializedRecipes);
     serializedRecipes.current = recipeBlockSerializer(recipeData);
-    console.log("after serialized recipes", serializedRecipes);
   }, [recipeData]);
 
   if (!serializedRecipes.current) return null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" >
       {serializedRecipes.current.map((block, index) => {
         return (
-          <div className="recipe-block grid grid-cols-12" key={index}>
+          <div
+            className="recipe-block grid grid-cols-12 border-2 rounded-md p-2 gap-2"
+            key={index}
+          >
             <img
-              src={block.instruction.image}
+              src={block.instructions.image}
               alt={""}
-              className="col-span-3"
+              className="col-start-1 col-end-4"
             />
-            <p className="col-span-5">{block.instruction.instructionContent}</p>
-            <div className="col-span-5 flex flex-col">
-              <div className="flex">
-                <img src="" alt="" />
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+            <p className="col-start-4 col-end-8">
+              {block.instructions.instructionContent}
+            </p>
+            <div className="col-start-8 col-end-13 flex flex-col">
+              {ingredientBlocks(block.ingredients)}
             </div>
           </div>
         );
@@ -39,38 +37,39 @@ export default function RecipeBlocks({ recipeData }) {
   );
 }
 
+function ingredientBlocks(ingredients) {
+  const blocks = ingredients.map((ingredient) => {
+    return (
+      <div className="flex justify-between" key={ingredient._id}>
+        <img src={ingredient.image} alt="" />
+        <span>{ingredient.ingredientName}</span>
+        <span>{ingredient.amount}</span>
+        <span>{ingredient.unit}</span>
+      </div>
+    );
+  });
+  return blocks;
+}
+
 function recipeBlockSerializer(recipeData) {
-  console.log(recipeData.instructions.length);
-  
   const serializedRecipeBlocks = Array.from(
     { length: recipeData.instructions.length },
     () => ({
-      instruction: { instructionContent: "", image: "" },
-      ingredient: [""],
+      instructions: { instructionContent: "", image: "" },
+      ingredients: [],
     })
   );
-  console.log("serializedRecipeBlocks before", serializedRecipeBlocks);
 
   recipeData.instructions.forEach((instruction) => {
-    console.log("instruction block", instruction.block);
-    serializedRecipeBlocks[instruction.block].instruction = instruction;
+    serializedRecipeBlocks[instruction.block].instructions = instruction;
   });
-
-  console.log(
-    "serializedRecipeBlocks after instruction",
-    serializedRecipeBlocks
-  );
 
   recipeData.ingredients.forEach((ingredient) => {
     ingredient.blocks.forEach((block) => {
-      console.log("ingredient block", block);
-      serializedRecipeBlocks[block].ingredient.push(ingredient);
+      console.log(ingredient);
+      serializedRecipeBlocks[block].ingredients.push(ingredient);
     });
   });
-  console.log(
-    "serializedRecipeBlocks after ingredient",
-    serializedRecipeBlocks
-  );
 
   return serializedRecipeBlocks;
 }
