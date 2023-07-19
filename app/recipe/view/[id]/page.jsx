@@ -7,6 +7,7 @@ import { useContext } from "react";
 import { UserContext } from "../../../../app/layout";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import RecipeBlocks from "../../../../components/RecipeBlock";
 
 function CreateRecipePage({ params }) {
   const router = useRouter();
@@ -23,6 +24,7 @@ function CreateRecipePage({ params }) {
     }
   }, [userData]);
 
+  const [title, setTitle] = React.useState("");
   const [servings, setServings] = React.useState(1);
   const [rateValue, setRateValue] = React.useState(0);
   const [description, setDescription] = React.useState("");
@@ -116,11 +118,12 @@ function CreateRecipePage({ params }) {
     if (recipeData != null) {
       console.log("recipeData", recipeData);
 
+      setTitle(recipeData?.title);
       setDescription(recipeData?.description);
       setInstructionSlots(recipeData?.instructions);
       setIngredientSlots(recipeData?.ingredients);
       setServings(recipeData?.servings);
-      setRateValue(recipeData?.rating);
+      setRateValue(recipeData?.rating || 0);
     }
   }, [recipeData]);
 
@@ -160,7 +163,6 @@ function CreateRecipePage({ params }) {
     setInstructionSlots((slots) => slots.filter((slot) => slot !== id));
     console.log("removeInstructionSlot");
   }
-
 
   const [copiedRecipe, setCopiedRecipe] = React.useState("");
 
@@ -254,12 +256,20 @@ function CreateRecipePage({ params }) {
                 </button>
               </div>
 
-              <Link href={`/recipe/cookingMode/${id}`} className="sm:col-span-6 mt-2 flex w-full justify-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+              <Link
+                href={`/recipe/cookingMode/${id}`}
+                className="sm:col-span-6 mt-2 flex w-full justify-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+              >
                 Cooking Mode
               </Link>
 
               {/* Title */}
-              <TitleForm title={recipeData?.title} />
+              <TitleForm title={title} />
+
+              {/* Recipe Block */}
+              <div className="sm:col-span-6">
+                {recipeData && <RecipeBlocks recipeData={recipeData} />}
+              </div>
 
               {/* Description */}
               <div className="sm:col-span-6">
@@ -279,9 +289,6 @@ function CreateRecipePage({ params }) {
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Brief description of the recipe.
-                </p>
               </div>
 
               {/* Ingredient */}
@@ -422,7 +429,7 @@ function CreateRecipePage({ params }) {
 
 export default CreateRecipePage;
 
-function TitleForm({ title }) {
+function TitleForm({ title, setTitle }) {
   return (
     <div className="sm:col-span-3">
       <label
@@ -436,7 +443,8 @@ function TitleForm({ title }) {
           type="text"
           name="title"
           id="title"
-          defaultValue={title}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           autoComplete="given-name"
           className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
         />

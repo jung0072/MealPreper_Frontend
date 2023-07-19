@@ -18,7 +18,7 @@ function IngredientForm({
         type="text"
         name={`ingredient-${id}-name`}
         id={id}
-        value={ingredientData?.ingredient || ""}
+        value={ingredientData?.ingredientName || ""}
         onChange={(e) => {
           setIngredientSlots((prev) => {
             const result = prev.map((item, index) => {

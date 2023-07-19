@@ -17,7 +17,7 @@ function InstructionForm({
       <textarea
         id={id}
         name={`instruction-${id}`}
-        value={instructionData}
+        value={instructionData.instructionContent}
         onChange={(e) => {
           console.log("onChange");
           setInstructionSlots((prev) => {
